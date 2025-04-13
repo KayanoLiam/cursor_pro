@@ -208,9 +208,9 @@ export default {
   
   computed: {
     ...mapState({
-      doctors: state => state.doctors,
-      loading: state => state.loading,
-      total: state => state.totalDoctors || 0
+      doctors: state => state.doctor.doctors,
+      loading: state => state.doctor.loading,
+      total: state => state.doctor.totalDoctors || 0
     })
   },
   
@@ -219,13 +219,37 @@ export default {
   },
   
   methods: {
-    fetchData() {
-      this.$store.dispatch('fetchDoctors', this.listQuery)
+    async fetchData() {
+      if (this.loading) return; // 防止重复请求
+      
+      try {
+        const loading = this.$loading({
+          lock: true,
+          text: this.listQuery.keyword ? '正在搜索...' : '加载中...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(255, 255, 255, 0.7)'
+        });
+        
+        await this.$store.dispatch('doctor/fetchDoctors', this.listQuery);
+        
+        loading.close();
+        
+        // 如果正在搜索且没有结果，显示提示
+        if (this.listQuery.keyword && this.doctors.length === 0) {
+          this.$message({
+            type: 'info',
+            message: '没有找到匹配的医生信息'
+          });
+        }
+      } catch (error) {
+        console.error('获取医生列表失败:', error);
+        this.$message.error('获取医生列表失败，请稍后重试');
+      }
     },
     
     handleFilter() {
-      this.listQuery.page = 1
-      this.fetchData()
+      this.listQuery.page = 1;
+      this.fetchData();
     },
     
     handleCurrentChange(val) {
@@ -273,16 +297,59 @@ export default {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
-        })
-        await this.$store.dispatch('deleteDoctor', row.id)
-        this.$message({
-          type: 'success',
-          message: '删除成功!'
-        })
-        this.fetchData()
+        });
+        
+        const loading = this.$loading({
+          lock: true,
+          text: '正在删除...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(255, 255, 255, 0.7)'
+        });
+        
+        try {
+          // 调用删除接口
+          const result = await this.$store.dispatch('doctor/deleteDoctor', row.id);
+          loading.close();
+          
+          // 处理结果
+          if (result && result.success) {
+            this.$message({
+              type: 'success',
+              message: '删除成功!'
+            });
+            
+            // 刷新列表以确保同步
+            this.fetchData();
+          } else {
+            console.error('删除失败:', result ? result.message : '未知错误');
+            
+            // 后端删除失败，但前端仍可以移除显示（提升用户体验）
+            this.$message({
+              type: 'warning',
+              message: '删除请求发送成功，但服务器响应异常。界面已更新，但数据可能未同步。'
+            });
+            
+            // 从本地数据中移除该医生
+            this.$store.commit('doctor/REMOVE_DOCTOR', row.id);
+          }
+        } catch (error) {
+          loading.close();
+          console.error('删除操作失败:', error);
+          
+          // 即使出错，也尝试从界面上移除
+          this.$message({
+            type: 'warning',
+            message: '删除请求失败。界面已更新，请刷新页面确认删除状态。'
+          });
+          
+          // 从本地数据中移除该医生
+          this.$store.commit('doctor/REMOVE_DOCTOR', row.id);
+        }
       } catch (err) {
+        // 用户取消删除操作
         if (err !== 'cancel') {
-          console.error(err)
+          console.error('删除操作异常:', err);
+          this.$message.error('删除操作发生异常，请稍后重试');
         }
       }
     },
@@ -293,13 +360,13 @@ export default {
           const isNew = this.dialogStatus === 'create'
           try {
             if (isNew) {
-              await this.$store.dispatch('createDoctor', this.form)
+              await this.$store.dispatch('doctor/createDoctor', this.form)
               this.$message({
                 type: 'success',
                 message: '创建成功!'
               })
             } else {
-              await this.$store.dispatch('updateDoctor', this.form)
+              await this.$store.dispatch('doctor/updateDoctor', this.form)
               this.$message({
                 type: 'success',
                 message: '更新成功!'

@@ -112,7 +112,12 @@ export default {
   name: 'Home',
   
   computed: {
-    ...mapState(['patients', 'doctors', 'appointments', 'loading']),
+    ...mapState({
+      patients: state => state.patients,
+      appointments: state => state.appointments,
+      loading: state => state.loading,
+      doctors: state => state.doctor.doctors
+    }),
     
     recentAppointments() {
       return this.appointments.slice(0, 5)
@@ -138,7 +143,7 @@ export default {
   
   created() {
     this.$store.dispatch('fetchPatients')
-    this.$store.dispatch('fetchDoctors')
+    this.$store.dispatch('doctor/fetchDoctors')
     this.$store.dispatch('fetchAppointments')
   }
 }
