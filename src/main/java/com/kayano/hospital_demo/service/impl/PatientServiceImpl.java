@@ -1,10 +1,12 @@
 package com.kayano.hospital_demo.service.impl;
 
 import com.kayano.hospital_demo.entity.Patient;
+import com.kayano.hospital_demo.mapper.AppointmentMapper;
 import com.kayano.hospital_demo.mapper.PatientMapper;
 import com.kayano.hospital_demo.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,6 +18,9 @@ public class PatientServiceImpl implements PatientService {
 
     @Autowired
     private PatientMapper patientMapper;
+    
+    @Autowired
+    private AppointmentMapper appointmentMapper;
     
     @Override
     public Patient addPatient(Patient patient) {
@@ -45,7 +50,12 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    @Transactional
     public boolean deletePatient(Long id) {
+        // 先删除所有与该患者关联的预约记录
+        appointmentMapper.deleteByPatientId(id);
+        
+        // 然后删除患者
         return patientMapper.deleteById(id) > 0;
     }
 } 

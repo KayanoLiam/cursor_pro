@@ -234,9 +234,9 @@ export default {
     ...mapState({
       appointments: state => state.appointments,
       patients: state => state.patients,
-      doctors: state => state.doctors,
       loading: state => state.loading
     }),
+    ...mapState('doctor', ['doctors']),
     
     filteredAppointments() {
       let result = this.appointments
@@ -397,7 +397,7 @@ export default {
   created() {
     this.$store.dispatch('fetchAppointments')
     this.$store.dispatch('fetchPatients')
-    this.$store.dispatch('fetchDoctors')
+    this.$store.dispatch('doctor/fetchDoctors')
   }
 }
 </script>

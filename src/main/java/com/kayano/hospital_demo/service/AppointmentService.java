@@ -48,4 +48,9 @@ public interface AppointmentService {
      * 取消预约
      */
     boolean cancelAppointment(Long id);
+    
+    /**
+     * 删除预约
+     */
+    boolean deleteAppointment(Long id);
 } 

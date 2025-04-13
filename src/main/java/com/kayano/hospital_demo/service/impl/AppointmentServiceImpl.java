@@ -62,4 +62,9 @@ public class AppointmentServiceImpl implements AppointmentService {
     public boolean cancelAppointment(Long id) {
         return appointmentMapper.updateStatus(id, "已取消") > 0;
     }
+
+    @Override
+    public boolean deleteAppointment(Long id) {
+        return appointmentMapper.deleteById(id) > 0;
+    }
 } 

@@ -124,4 +124,16 @@ public interface AppointmentMapper {
      */
     @Delete("DELETE FROM appointment WHERE id = #{id}")
     int deleteById(Long id);
+    
+    /**
+     * 根据医生ID删除预约
+     */
+    @Delete("DELETE FROM appointment WHERE doctor_id = #{doctorId}")
+    int deleteByDoctorId(Long doctorId);
+    
+    /**
+     * 根据患者ID删除预约
+     */
+    @Delete("DELETE FROM appointment WHERE patient_id = #{patientId}")
+    int deleteByPatientId(Long patientId);
 } 
